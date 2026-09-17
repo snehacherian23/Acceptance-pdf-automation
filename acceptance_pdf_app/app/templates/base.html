@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Acceptance PDF Automation{% endblock %}</title>
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <!-- Google Fonts: Manrope (display), Inter (body), JetBrains Mono (data/console) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- App styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+    <!-- Flash messages, shown as dismissible toasts stacked top-right -->
+    <div class="toast-stack" id="toastStack">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="toast align-items-center text-bg-{{ 'danger' if category == 'danger' else category }} border-0 show mb-2"
+                         role="alert" data-bs-autohide="true" data-bs-delay="4500">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                {% if category == 'success' %}<i class="bi bi-check-circle-fill me-2"></i>{% endif %}
+                                {% if category == 'danger' %}<i class="bi bi-exclamation-triangle-fill me-2"></i>{% endif %}
+                                {% if category == 'warning' %}<i class="bi bi-exclamation-circle-fill me-2"></i>{% endif %}
+                                {% if category == 'info' %}<i class="bi bi-info-circle-fill me-2"></i>{% endif %}
+                                {{ message }}
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    {% block navbar %}{% endblock %}
+    {% block content %}{% endblock %}
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Auto-dismiss toasts using Bootstrap's Toast component
+        document.querySelectorAll('.toast').forEach(function (el) {
+            new bootstrap.Toast(el).show();
+        });
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · Acceptance PDF Automation{% endblock %}
+
+{% block content %}
+<div class="app-shell">
+
+    <!-- Mobile overlay, closes sidebar when tapped -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- ============ Sidebar ============ -->
+    <aside class="app-sidebar" id="appSidebar">
+        <div class="sidebar-brand">
+            <span class="brand-mark"><i class="bi bi-file-earmark-check-fill"></i></span>
+            Acceptance PDF Automation
+        </div>
+
+        <nav class="sidebar-nav">
+            <button type="button" class="sidebar-nav-item active" data-workflow="workflow1">
+                <i class="bi bi-file-earmark-plus-fill"></i>
+                Generate Acceptance Documents
+            </button>
+            <button type="button" class="sidebar-nav-item" data-workflow="workflow2">
+                <i class="bi bi-patch-check-fill"></i>
+                Prepare Final Documents
+            </button>
+        </nav>
+
+        <div class="sidebar-footer">
+            Internal tool &middot; Telecom Acceptance Automation
+        </div>
+    </aside>
+
+    <!-- ============ Main area ============ -->
+    <div class="app-main">
+        <!-- Decorative, purely visual -- corporate-safe (low opacity, no motion) -->
+        <div class="decor-bg">
+            <div class="decor-blob b1"></div>
+            <div class="decor-blob b2"></div>
+            <div class="decor-blob b3"></div>
+            <i class="bi bi-diagram-3 decor-doc-icon"></i>
+        </div>
+
+        <!-- ============ Header ============ -->
+        <header class="app-header">
+            <div class="header-titles">
+                <button type="button" class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle navigation">
+                    <i class="bi bi-list"></i>
+                </button>
+                <div>
+                    <h1 id="headerTitle">Generate Acceptance Documents</h1>
+                    <p class="header-subtitle" id="headerSubtitle">Excel rows in, signed-ready Word documents out.</p>
+                </div>
+            </div>
+            <div class="user-pill">
+                <i class="bi bi-person-circle"></i>
+                {{ current_user.username }}
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-secondary btn-sm ms-2">
+                    <i class="bi bi-box-arrow-right"></i> Log Out
+                </a>
+            </div>
+        </header>
+
+        <!-- ======================================================
+             WORKFLOW 1 -- Generate Acceptance Test Documents
+             (existing functionality, unchanged element IDs/logic)
+             ====================================================== -->
+        <section class="workflow-panel" id="workflow1Panel">
+
+            <!-- ============ Upload card ============ -->
+            <div class="card glass-card upload-card">
+                <h5><i class="bi bi-cloud-arrow-up-fill"></i> Upload Excel Sheet(s)</h5>
+                <p class="text-muted small mb-3" style="margin-top:-0.75rem;">
+                    Each row generates one Acceptance Test Word document. Multiple sheets are combined automatically.
+                </p>
+
+                <form id="processingForm">
+
+                    <!-- Excel Sheets -->
+                    <div class="upload-section">
+                        <div class="upload-section-label">
+                            <span class="title"><i class="bi bi-file-earmark-spreadsheet"></i> Excel Sheets</span>
+                            <span class="count-badge" id="excelCount">0 selected</span>
+                        </div>
+                        <div class="file-chip-list" id="excelChipList"></div>
+                        <label class="add-files-btn">
+                            <i class="bi bi-plus-lg"></i> Add Excel Sheets
+                            <input type="file" id="excelInput" accept=".xlsx,.xls" multiple>
+                        </label>
+                        <div class="text-end mt-1">
+                            <button type="button" class="clear-all-btn d-none" id="clearExcel">Clear all Excel sheets</button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary process-btn" id="processBtn">
+                        <i class="bi bi-file-earmark-plus-fill"></i> Generate Documents
+                    </button>
+
+                    <div class="progress-track" id="progressTrack"><div class="bar"></div></div>
+
+                    <!-- Live progress: current row + X/Y completed -->
+                    <div class="processing-status" id="processingStatus">
+                        <div class="status-row">
+                            <span class="status-label"><i class="bi bi-hourglass-split"></i> Generating documents...</span>
+                            <span class="status-count" id="progressCount">0 / 0</span>
+                        </div>
+                        <div class="current-file" id="currentFileLabel">Starting...</div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ============ Completion summary ============ -->
+            <div id="completionPanel" class="d-none">
+                <div class="section-divider">Results</div>
+                <div class="card completion-card">
+                    <div class="completion-icon"><i class="bi bi-check-lg"></i></div>
+                    <h4>Generation Complete</h4>
+                    <div class="completion-grid">
+                        <div class="metric total"><div class="value" id="cTotal">0</div><div class="label">Total Rows</div></div>
+                        <div class="metric success"><div class="value" id="cSuccess">0</div><div class="label">Successful</div></div>
+                        <div class="metric failed"><div class="value" id="cFailed">0</div><div class="label">Failed</div></div>
+                        <div class="metric review"><div class="value" id="cReview">0</div><div class="label">Manual Review</div></div>
+                    </div>
+                    <div class="completion-actions">
+                        <a href="#" id="downloadZipBtn" class="btn btn-primary d-none">
+                            <i class="bi bi-file-earmark-zip-fill"></i> Download ZIP
+                        </a>
+                        <a href="#" id="downloadReportBtn" class="btn btn-outline-secondary d-none">
+                            <i class="bi bi-file-earmark-excel"></i> Download Processing Report
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============ Stat cards ============ -->
+            <div id="resultsPanel" class="d-none">
+                <div class="stat-grid">
+                    <div class="card stat-card total">
+                        <div class="stat-icon"><i class="bi bi-stack"></i></div>
+                        <div class="stat-label">Total Rows</div>
+                        <div class="stat-value" id="statTotal">0</div>
+                    </div>
+                    <div class="card stat-card success">
+                        <div class="stat-icon"><i class="bi bi-check-circle-fill"></i></div>
+                        <div class="stat-label">Documents Generated</div>
+                        <div class="stat-value" id="statSuccess">0</div>
+                    </div>
+                    <div class="card stat-card failed">
+                        <div class="stat-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                        <div class="stat-label">Failed</div>
+                        <div class="stat-value" id="statFailed">0</div>
+                    </div>
+                    <div class="card stat-card review">
+                        <div class="stat-icon"><i class="bi bi-folder2-open"></i></div>
+                        <div class="stat-label">Manual Review</div>
+                        <div class="stat-value" id="statReview">0</div>
+                    </div>
+                    <div class="card stat-card time">
+                        <div class="stat-icon"><i class="bi bi-stopwatch-fill"></i></div>
+                        <div class="stat-label">Processing Time</div>
+                        <div class="stat-value" id="statTime">--</div>
+                    </div>
+                </div>
+
+                <div class="section-divider">Detailed Logs</div>
+                <div class="card console-card">
+                    <div class="console-header">
+                        <h6><i class="bi bi-terminal-fill"></i> Processing Logs</h6>
+                        <div class="console-dots"><span></span><span></span><span></span></div>
+                    </div>
+                    <div id="logPanel" class="console-body"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ======================================================
+             WORKFLOW 2 -- Prepare Final Signed Documents
+             Converts signed .docx documents to PDF and appends the
+             Consolidated Sheet(s) to each -- see processing_routes.py
+             /processing/run-final.
+             ====================================================== -->
+        <section class="workflow-panel d-none" id="workflow2Panel">
+
+            <div class="card glass-card upload-card">
+                <h5><i class="bi bi-cloud-arrow-up-fill"></i> Upload Files</h5>
+                <p class="text-muted small mb-3" style="margin-top:-0.75rem;">
+                    Once the signed Acceptance Test documents come back, upload them here along with the Consolidated Sheet(s) to prepare the final deliverable.
+                </p>
+
+                <form id="workflow2Form">
+
+                    <!-- Signed Word Documents -->
+                    <div class="upload-section">
+                        <div class="upload-section-label">
+                            <span class="title"><span class="step-badge">1</span> <i class="bi bi-file-earmark-word"></i> Signed Acceptance Documents</span>
+                            <span class="count-badge" id="signedCount">0 selected</span>
+                        </div>
+                        <div class="file-chip-list" id="signedChipList"></div>
+                        <label class="add-files-btn">
+                            <i class="bi bi-plus-lg"></i> Add Signed Documents (.docx or .pdf)
+                            <input type="file" id="signedInput" accept=".docx,.pdf" multiple>
+                        </label>
+                        <div class="text-end mt-1">
+                            <button type="button" class="clear-all-btn d-none" id="clearSigned">Clear all signed documents</button>
+                        </div>
+                    </div>
+
+                    <!-- Consolidated Sheets -->
+                    <div class="upload-section">
+                        <div class="upload-section-label">
+                            <span class="title"><span class="step-badge">2</span> <i class="bi bi-file-earmark-pdf"></i> Consolidated Sheets</span>
+                            <span class="count-badge" id="finalConsolidatedCount">0 selected</span>
+                        </div>
+                        <div class="file-chip-list" id="finalConsolidatedChipList"></div>
+                        <label class="add-files-btn">
+                            <i class="bi bi-plus-lg"></i> Add Consolidated Sheets (.docx or .pdf)
+                            <input type="file" id="finalConsolidatedInput" accept=".docx,.pdf" multiple>
+                        </label>
+                        <div class="text-end mt-1">
+                            <button type="button" class="clear-all-btn d-none" id="clearFinalConsolidated">Clear all Consolidated Sheets</button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary process-btn" id="generateFinalBtn">
+                        <i class="bi bi-file-earmark-pdf-fill"></i> Generate Final PDFs
+                    </button>
+
+                    <div class="progress-track" id="finalProgressTrack"><div class="bar"></div></div>
+
+                    <!-- Live progress: current document + X/Y completed -->
+                    <div class="processing-status" id="finalProcessingStatus">
+                        <div class="status-row">
+                            <span class="status-label"><i class="bi bi-hourglass-split"></i> Finalizing documents...</span>
+                            <span class="status-count" id="finalProgressCount">0 / 0</span>
+                        </div>
+                        <div class="current-file" id="finalCurrentFileLabel">Starting...</div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ============ Completion summary ============ -->
+            <div id="finalCompletionPanel" class="d-none">
+                <div class="section-divider">Results</div>
+                <div class="card completion-card">
+                    <div class="completion-icon"><i class="bi bi-check-lg"></i></div>
+                    <h4>Finalization Complete</h4>
+                    <div class="completion-grid">
+                        <div class="metric total"><div class="value" id="fcTotal">0</div><div class="label">Total Documents</div></div>
+                        <div class="metric success"><div class="value" id="fcSuccess">0</div><div class="label">Successful</div></div>
+                        <div class="metric failed"><div class="value" id="fcFailed">0</div><div class="label">Failed</div></div>
+                        <div class="metric review"><div class="value" id="fcReview">0</div><div class="label">Manual Review</div></div>
+                    </div>
+                    <div class="completion-actions">
+                        <a href="#" id="finalDownloadZipBtn" class="btn btn-primary d-none">
+                            <i class="bi bi-file-earmark-zip-fill"></i> Download ZIP
+                        </a>
+                        <a href="#" id="finalDownloadReportBtn" class="btn btn-outline-secondary d-none">
+                            <i class="bi bi-file-earmark-excel"></i> Download Processing Report
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============ Stat cards ============ -->
+            <div id="workflow2ResultsPanel" class="d-none">
+                <div class="stat-grid">
+                    <div class="card stat-card total">
+                        <div class="stat-icon"><i class="bi bi-stack"></i></div>
+                        <div class="stat-label">Total Documents</div>
+                        <div class="stat-value" id="finalStatTotal">0</div>
+                    </div>
+                    <div class="card stat-card success">
+                        <div class="stat-icon"><i class="bi bi-check-circle-fill"></i></div>
+                        <div class="stat-label">Final PDFs Created</div>
+                        <div class="stat-value" id="finalStatSuccess">0</div>
+                    </div>
+                    <div class="card stat-card failed">
+                        <div class="stat-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                        <div class="stat-label">Failed</div>
+                        <div class="stat-value" id="finalStatFailed">0</div>
+                    </div>
+                    <div class="card stat-card review">
+                        <div class="stat-icon"><i class="bi bi-folder2-open"></i></div>
+                        <div class="stat-label">Manual Review</div>
+                        <div class="stat-value" id="finalStatReview">0</div>
+                    </div>
+                    <div class="card stat-card time">
+                        <div class="stat-icon"><i class="bi bi-stopwatch-fill"></i></div>
+                        <div class="stat-label">Processing Time</div>
+                        <div class="stat-value" id="finalStatTime">--</div>
+                    </div>
+                </div>
+
+                <div class="section-divider">Detailed Logs</div>
+                <div class="card console-card">
+                    <div class="console-header">
+                        <h6><i class="bi bi-terminal-fill"></i> Processing Logs</h6>
+                        <div class="console-dots"><span></span><span></span><span></span></div>
+                    </div>
+                    <div id="finalLogPanel" class="console-body"></div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}
