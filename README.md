@@ -15,8 +15,7 @@ Acceptance Test documents:
 ## Requirements
 
 - **Python 3.10+**
-- **LibreOffice** (required only for Workflow 2 — converts signed Word
-  documents to PDF). Download: https://www.libreoffice.org/download/
+- **Microsoft Word** (required for Workflow 2 — used to convert Word documents to PDF)
 - The Python packages listed in `requirements.txt`
 
 ---
@@ -56,10 +55,8 @@ When you double-click `Start.bat`, it will:
    clear instructions if it hasn't.
 4. Activate the virtual environment.
 5. Verify Python and all required packages are available.
-6. Check for LibreOffice and show a warning (not an error — Workflow 1 still
-   works) if it's missing.
-7. Start the application server.
-8. Automatically open your default web browser to
+6. Start the application server.
+7. Automatically open your default web browser to
    **http://127.0.0.1:5000** once the server is ready.
 
 A Command Prompt window will stay open the whole time the application is
@@ -85,7 +82,6 @@ application's port. In normal day-to-day use you shouldn't need it.
 |---|---|
 | Window shows "virtual environment was not found" | Run the [First-time setup](#first-time-setup) commands above, then try `Start.bat` again. |
 | Window shows "required Python packages are missing" | Run `venv\Scripts\pip install -r requirements.txt`, then try `Start.bat` again. |
-| Window shows a LibreOffice warning | Workflow 1 will still work. If you need Workflow 2, install LibreOffice from the link shown, then try `Start.bat` again. |
 | Browser doesn't open automatically after ~30 seconds | Open a browser yourself and go to `http://127.0.0.1:5000` — the server may just still be starting up. |
 | "Port 5000 is already in use" / app seems to already be running | This is expected if you already have it open elsewhere — `Start.bat` will open your browser to the existing instance. If that's not expected, run `Stop.bat` first, then `Start.bat` again. |
 | The window closed immediately with no message visible | This shouldn't happen — every error path in `Start.bat` pauses and waits for a key press before closing. If you see this, please report it along with what you were doing right before it happened. |
